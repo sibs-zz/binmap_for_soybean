@@ -60,12 +60,13 @@ pip install -r requirements.txt
 ### 仓库文件
 
 ```text
-binmap_pipeline.py   # 主程序
-Seq2Bin_F24.pl       # bin calling（须与主程序同目录）
-environment.yml      # conda 环境
-requirements.txt     # Python 依赖（Pillow）
-examples/            # 输入格式示例、IciMapping bip 参考
-example_run.sh       # 示例启动脚本
+binmap_pipeline.py              # 主程序
+Seq2Bin_F24.pl                  # bin calling（须与主程序同目录）
+annotate_qtlout_physical.py     # 将 IciMapping qtlout 映射到物理坐标
+environment.yml                 # conda 环境
+requirements.txt                # Python 依赖（Pillow）
+examples/                       # 输入格式示例、IciMapping bip 参考
+example_run.sh                  # 示例启动脚本
 ```
 
 ## 2. 输入文件
@@ -171,8 +172,26 @@ outdir/
 ### 对接 QTL IciMapping
 
 1. 导入 `binmap.bip`（或 `binmap.nopheno.bip`）。
-2. 连锁 / QTL 扫描 → 如 `qtlout.txt`。
-3. 用 `LeftMarker` / `RightMarker`（`bin_xxxxx`）在 `bin_physical.tsv` 查物理区间。
+2. 连锁 / QTL 扫描 → 得到 `qtlout.txt`（含 `LeftMarker` / `RightMarker`，如 `bin_03082`）。
+3. 用仓库脚本把 QTL 峰映射到参考基因组物理坐标：
+
+```bash
+python annotate_qtlout_physical.py \
+  --qtlout qtlout.txt \
+  --physical binmap_out/bin_physical.tsv \
+  --out qtlout.with_physical.tsv
+```
+
+输出在原 QTL 表基础上增加：
+
+| 列 | 含义 |
+|----|------|
+| PhysChrom | 物理染色体（如 Chr11） |
+| PeakLeft_* / PeakRight_* | Left/RightMarker 对应的 start/end/mid |
+| Peak_interval_start/end/Mb | 峰两侧 bin 合并区间 |
+| CI_* / CI_Mb | 按 LeftCI–RightCI（cM）推算的物理置信区间 |
+
+不写 `--out` 时，默认生成同目录下的 `qtlout.with_physical.tsv`。
 
 bip 默认：F2、Kosambi、`Chr1`…`Chr20`；编码 P1=2 / H=1 / P2=0 / miss=-1。基因型与表型按同一样本 ID 顺序对齐。
 
@@ -192,7 +211,7 @@ conda activate binmap
 Includes Python, Pillow, Perl, bwa, seqtk, samtools, bcftools, GATK4, and JDK.  
 Alternatively: `pip install -r requirements.txt` if bioinformatics tools are already on `PATH`.
 
-Keep `Seq2Bin_F24.pl` next to `binmap_pipeline.py`.
+Keep `Seq2Bin_F24.pl` next to `binmap_pipeline.py`. Helper script `annotate_qtlout_physical.py` maps IciMapping QTL peaks to physical coordinates.
 
 ## 2. Inputs
 
@@ -218,7 +237,18 @@ python binmap_pipeline.py \
 ## 4. Outputs & IciMapping
 
 - `bins/`, `plots/`, `bin_physical.tsv`
-- `binmap.bip` → import into QTL IciMapping; map peaks to bp via `bin_physical.tsv`
+- `binmap.bip` → import into QTL IciMapping
+
+After QTL scanning, annotate physical positions:
+
+```bash
+python annotate_qtlout_physical.py \
+  --qtlout qtlout.txt \
+  --physical binmap_out/bin_physical.tsv \
+  --out qtlout.with_physical.tsv
+```
+
+Uses `LeftMarker` / `RightMarker` (`bin_xxxxx`) and CI (cM) against `bin_physical.tsv` to add chromosome bp intervals (`Peak_interval_*`, `CI_*`).
 
 ## License
 
