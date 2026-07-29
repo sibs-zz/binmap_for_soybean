@@ -1,0 +1,3 @@
+# One phenotype file path per line.
+# 每行一个表型文件路径。
+examples/trait_example.pheno

@@ -1,0 +1,5 @@
+# One R1 FASTQ path per line. R2 is inferred automatically.
+# 每行一个 R1；脚本自动配对 R2。
+/path/to/sampleA_1.clean.fq.gz
+/path/to/sampleB_1.clean.fq.gz
+/path/to/sampleC_R1.fastq.gz

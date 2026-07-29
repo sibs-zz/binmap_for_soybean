@@ -1,0 +1,22 @@
+# large / local run artifacts
+binmap_out/
+binmap_test*/
+*.sam
+*.bam
+*.bai
+*.fq
+*.fastq
+*.fq.gz
+*.fastq.gz
+*.g.vcf
+*.g.vcf.gz
+*.vcf.gz
+*.tbi
+*.csi
+pseudo/
+samples/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+nohup.out

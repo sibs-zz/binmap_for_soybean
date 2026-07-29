@@ -1,0 +1,4 @@
+# FID IID value  (whitespace-separated; NA / . / - for missing)
+sampleA sampleA 12.5
+sampleB sampleB 10.1
+sampleC sampleC NA
