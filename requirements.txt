@@ -1,0 +1,3 @@
+# Minimal Python deps if tools (bwa/seqtk/gatk/bcftools/samtools/perl) are already on PATH.
+# Prefer: conda env create -f environment.yml
+pillow>=9.0
