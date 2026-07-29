@@ -65,7 +65,7 @@ Seq2Bin_F24.pl                  # bin calling（须与主程序同目录）
 annotate_qtlout_physical.py     # 将 IciMapping qtlout 映射到物理坐标
 environment.yml                 # conda 环境
 requirements.txt                # Python 依赖（Pillow）
-examples/                       # 输入格式示例、IciMapping bip 参考
+examples/                       # 输入格式、qtlout 示例、IciMapping bip 参考
 example_run.sh                  # 示例启动脚本
 ```
 
@@ -172,15 +172,24 @@ outdir/
 ### 对接 QTL IciMapping
 
 1. 导入 `binmap.bip`（或 `binmap.nopheno.bip`）。
-2. 连锁 / QTL 扫描 → 得到 `qtlout.txt`（含 `LeftMarker` / `RightMarker`，如 `bin_03082`）。
-3. 用仓库脚本把 QTL 峰映射到参考基因组物理坐标：
+2. 做 QTL 扫描后，IciMapping 会生成 **`.qic` 结果文件**。把其中的 QTL 表复制/另存为文本即可当作 `qtlout.txt`（表头含 `TraitID TraitName Chromosome Position LeftMarker RightMarker LOD …`；仓库 `examples/qtlout.txt` 即为一份示例）。
+3. 用脚本把 QTL 峰映射到参考基因组物理坐标（需同一次分析的 `bin_physical.tsv`）：
 
 ```bash
+# 使用仓库自带示例
+python annotate_qtlout_physical.py \
+  --qtlout examples/qtlout.txt \
+  --physical examples/bin_physical.tsv \
+  --out examples/qtlout.with_physical.tsv
+
+# 或你自己的结果
 python annotate_qtlout_physical.py \
   --qtlout qtlout.txt \
   --physical binmap_out/bin_physical.tsv \
   --out qtlout.with_physical.tsv
 ```
+
+`examples/qtlout.with_physical.tsv` 是注释后的示例输出。
 
 输出在原 QTL 表基础上增加：
 
@@ -239,16 +248,16 @@ python binmap_pipeline.py \
 - `bins/`, `plots/`, `bin_physical.tsv`
 - `binmap.bip` → import into QTL IciMapping
 
-After QTL scanning, annotate physical positions:
+After QTL scanning, IciMapping writes a **`.qic`** result. Copy/export the QTL table from that file as `qtlout.txt` (see `examples/qtlout.txt`). Then annotate physical positions:
 
 ```bash
 python annotate_qtlout_physical.py \
-  --qtlout qtlout.txt \
-  --physical binmap_out/bin_physical.tsv \
-  --out qtlout.with_physical.tsv
+  --qtlout examples/qtlout.txt \
+  --physical examples/bin_physical.tsv \
+  --out examples/qtlout.with_physical.tsv
 ```
 
-Uses `LeftMarker` / `RightMarker` (`bin_xxxxx`) and CI (cM) against `bin_physical.tsv` to add chromosome bp intervals (`Peak_interval_*`, `CI_*`).
+`examples/qtlout.with_physical.tsv` is the annotated example. The script uses `LeftMarker` / `RightMarker` (`bin_xxxxx`) and CI (cM) against `bin_physical.tsv` to add bp intervals (`Peak_interval_*`, `CI_*`).
 
 ## License
 
