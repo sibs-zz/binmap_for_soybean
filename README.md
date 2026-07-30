@@ -166,8 +166,11 @@ outdir/
   bin_physical.tsv       # bin → 物理坐标 + cM
   binmap.bip             # IciMapping 输入（含表型）
   binmap.nopheno.bip
+  binmap.geno_matrix.tsv # 样本×bin 基因型矩阵（与 bip 同编码）
   samples.summary.tsv
 ```
+
+`binmap.geno_matrix.tsv` 第一行注释说明编码：`2=P1(名字)  1=heterozygote  0=P2(名字)  -1=missing`；表头为 `bin_id chrom start end mid_bp position_cM` + 各样本列。
 
 ### 对接 QTL IciMapping
 
@@ -247,6 +250,7 @@ python binmap_pipeline.py \
 
 - `bins/`, `plots/`, `bin_physical.tsv`
 - `binmap.bip` → import into QTL IciMapping
+- `binmap.geno_matrix.tsv` — sample × bin genotype matrix (same codes as `.bip`: `2=P1`, `1=H`, `0=P2`, `-1=missing`; first comment line names the parents)
 
 After QTL scanning, IciMapping writes a **`.qic`** result. Copy/export the QTL table from that file as `qtlout.txt` (see `examples/qtlout.txt`). Then annotate physical positions:
 

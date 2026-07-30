@@ -1313,10 +1313,7 @@ def write_bip(
         chr_counts[m[0]] += 1
 
     # bip coding
-    code = {"A": "2", "H": "1", "B": "0", "U": "-1"}
-    if pop_type.upper() in ("DH", "F1DH", "RIL", "F1RIL"):
-        # collapse hetero to missing for inbred/DH
-        code["H"] = "-1"
+    code = bip_geno_code(pop_type)
 
     n_chr = len(chroms)
     n_ind = len(sample_order)
@@ -1389,6 +1386,51 @@ def write_bip(
 
     path.write_text("\n".join(lines) + "\n")
     LOG.info("Wrote bip: %s", path)
+
+
+def bip_geno_code(pop_type: str) -> Dict[str, str]:
+    """A/H/B/U → bip numeric codes (P1=2, H=1, P2=0, miss=-1)."""
+    code = {"A": "2", "H": "1", "B": "0", "U": "-1"}
+    if pop_type.upper() in ("DH", "F1DH", "RIL", "F1RIL"):
+        code["H"] = "-1"
+    return code
+
+
+def write_geno_matrix(
+    path: Path,
+    markers: List[Tuple[str, float, int, int]],
+    cm: List[float],
+    sample_order: List[str],
+    geno_matrix: List[List[str]],
+    p1_name: str,
+    p2_name: str,
+    pop_type: str,
+) -> None:
+    """
+    Sample × bin genotype matrix (same codes as .bip).
+    Rows = bins (+ physical coords); columns = samples.
+    """
+    code = bip_geno_code(pop_type)
+    n_ind = len(sample_order)
+    with open(path, "w") as out:
+        out.write(
+            f"# Coding: 2=P1({p1_name})  1=heterozygote  0=P2({p2_name})  -1=missing"
+            f"  | pop_type={pop_type}\n"
+        )
+        out.write(
+            "bin_id\tchrom\tstart\tend\tmid_bp\tposition_cM\t"
+            + "\t".join(sample_order)
+            + "\n"
+        )
+        for i, ((chrom, _mid, start, end), g) in enumerate(zip(markers, cm)):
+            mid_bp = (start + end) // 2
+            codes = [code.get(geno_matrix[s][i], "-1") for s in range(n_ind)]
+            out.write(
+                f"bin_{i+1:05d}\t{chrom}\t{start}\t{end}\t{mid_bp}\t{g}\t"
+                + "\t".join(codes)
+                + "\n"
+            )
+    LOG.info("Wrote genotype matrix: %s  (%d bins × %d samples)", path, len(markers), n_ind)
 
 
 def cleanup_work(outdir: Path, keep_pseudo: bool) -> None:
@@ -1667,6 +1709,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             args.pop_type,
         )
 
+    geno_mat_path = outdir / "binmap.geno_matrix.tsv"
+    write_geno_matrix(
+        geno_mat_path,
+        markers,
+        cm,
+        ok_samples,
+        geno_matrix,
+        p1_name,
+        p2_name,
+        args.pop_type,
+    )
+
     # summary
     with open(outdir / "samples.summary.tsv", "w") as out:
         out.write("sample\tok\tn_informative\tn_bins\terror\n")
@@ -1678,7 +1732,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     cleanup_work(outdir, keep_pseudo=keep_pseudo)
 
     LOG.info("Done. Outputs in %s", outdir)
-    LOG.info("  bins/*.bin  plots/*.bin.png  %s  %s", phys_path.name, bip_path.name)
+    LOG.info(
+        "  bins/*.bin  plots/*.bin.png  %s  %s  %s",
+        phys_path.name,
+        bip_path.name,
+        geno_mat_path.name,
+    )
     return 0
 
 
